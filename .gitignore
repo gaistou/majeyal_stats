@@ -1,6 +1,8 @@
 # Jupyter
 .ipynb_checkpoints/
 
+.claude/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -14,8 +16,11 @@ env/
 # Variables d'environnement
 .env
 
-# Cache scraper
-cache/
+# Secrets Streamlit
+.streamlit/secrets.toml
+
+# Admin local uniquement
+pages/admin.py
 
 # OS
 .DS_Store
