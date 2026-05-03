@@ -67,6 +67,21 @@ def calculer_correlations_prodigies(df_details, index_valides):
     return compteur_pairs, compteur_solo
 
 
+def get_game_version(addons):
+    """Return (major, minor, patch) from the 'Ashes of Urh'Rok X.Y.Z' addon, or None."""
+    PROXY_ADDONS = ("Ashes of Urh'Rok", "Embers of Rage", "Forbidden Cults", "Possessor Bonus Class")
+    for addon in (addons or []):
+        for name in PROXY_ADDONS:
+            if addon.startswith(name):
+                parts = addon.rsplit(" ", 1)
+                if len(parts) == 2:
+                    try:
+                        return tuple(int(x) for x in parts[1].split("."))
+                    except ValueError:
+                        pass
+    return None
+
+
 def stats_depuis_indices(df_details, index_valides):
     indices = set(index_valides)
     compteur_prodigies = {}
@@ -122,6 +137,10 @@ if selected_class in st.session_state.results_by_class:
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
+    st.subheader("Version")
+    filtre_version_17 = st.checkbox("Only version ≥ 1.7", value=True)
+
+    st.divider()
     st.subheader("Class")
     selected_class = st.selectbox("Class", list(CLASSES.keys()), key="class_selector")
 
@@ -153,6 +172,18 @@ df["race"] = df["name"].str.extract(rf"level\s+\d+\s+(\w+)\s+{selected_class}", 
 
 # Base indices (excluding cheats/language)
 index_valides_base = df_details.loc[~df_details["ignore"].astype(bool), "index_df"].tolist()
+
+# Apply version filter
+if filtre_version_17:
+    version_min = (1, 7)
+    indices_v17 = {
+        row["index_df"]
+        for _, row in df_details.iterrows()
+        if row["index_df"] in set(index_valides_base)
+        and (v := get_game_version(row.get("addons") or [])) is not None
+        and v[:2] >= version_min
+    }
+    index_valides_base = [i for i in index_valides_base if i in indices_v17]
 
 # Apply cross-filter
 filtre_actif = talent_filtre != "(none)"
@@ -187,10 +218,15 @@ df_talents_top = (
 )
 
 # Active filter banner
+filtres_actifs = []
+if filtre_version_17:
+    filtres_actifs.append("version ≥ 1.7")
 if filtre_actif:
+    filtres_actifs.append(f"**{talent_filtre} ≥ {points_filtre} pts**")
+if filtres_actifs:
     st.info(
-        f"Active filter: **{talent_filtre} ≥ {points_filtre} pts** "
-        f"— {len(df_filtre)} characters out of {len(index_valides_base)}"
+        f"Active filter{'s' if len(filtres_actifs) > 1 else ''}: {' + '.join(filtres_actifs)} "
+        f"— {len(df_filtre)} characters out of {len(df)}"
     )
 
 # Global metrics
