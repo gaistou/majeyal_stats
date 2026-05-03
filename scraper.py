@@ -2,12 +2,26 @@ import json
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import local as thread_local
 
 import requests
+from requests.adapters import HTTPAdapter
 import pandas as pd
 from bs4 import BeautifulSoup
 
 CHAR_CACHE_FILE = "cache/characters.json"
+
+_tls = thread_local()
+
+
+def _get_session():
+    if not hasattr(_tls, "session"):
+        session = requests.Session()
+        adapter = HTTPAdapter(pool_connections=1, pool_maxsize=32)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        _tls.session = session
+    return _tls.session
 
 
 def charger_cache_chars():
@@ -91,7 +105,7 @@ PARAMS_BASE = {
 
 
 def get_html(url, params=None, timeout=30):
-    reponse = requests.get(url, params=params, timeout=timeout)
+    reponse = _get_session().get(url, params=params, timeout=timeout)
     reponse.raise_for_status()
     return reponse.text
 
@@ -109,8 +123,7 @@ def supprimer_tooltips(bloc):
         tooltip.decompose()
 
 
-def extraire_artefacts_jaunes(html):
-    soup = BeautifulSoup(html, "html.parser")
+def extraire_artefacts_jaunes(soup):
     for titre in soup.find_all("h4"):
         if titre.get_text(strip=True) != "Equipment":
             continue
@@ -128,7 +141,7 @@ def extraire_artefacts_jaunes(html):
 
 
 def extraire_page(html):
-    soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(html, "lxml")
     lignes = soup.select("table.sticky-enabled tbody tr")
     donnees = []
     for ligne in lignes:
@@ -168,8 +181,7 @@ def scraper_pages(nb_pages=50, params=None, on_page=None):
     return pd.concat(tableaux, ignore_index=True) if tableaux else pd.DataFrame()
 
 
-def extraire_addons(html):
-    soup = BeautifulSoup(html, "html.parser")
+def extraire_addons(soup):
     for cellule in soup.find_all("td"):
         if cellule.get_text(strip=True) != "Addons":
             continue
@@ -186,8 +198,7 @@ def extraire_addons(html):
     return []
 
 
-def extraire_prodigies(html):
-    soup = BeautifulSoup(html, "html.parser")
+def extraire_prodigies(soup):
     for titre in soup.find_all("h4"):
         if titre.get_text(strip=True) != "Prodigies":
             continue
@@ -207,8 +218,7 @@ def extraire_prodigies(html):
     return []
 
 
-def extraire_talents(html, titre_talents):
-    soup = BeautifulSoup(html, "html.parser")
+def extraire_talents(soup, titre_talents):
     talents = []
     titre = soup.find("h4", string=lambda texte: texte and texte.strip() == titre_talents)
     if titre is None:
@@ -216,13 +226,13 @@ def extraire_talents(html, titre_talents):
     tableau = titre.find_next("table", class_="talents")
     if tableau is None:
         return talents
-    arbre_courant = None
-    multiplicateur_arbre = None
+    current_tree = None
+    tree_multiplier = None
     for ligne in tableau.find_all("tr"):
         cellules = ligne.find_all("td")
         if len(cellules) == 2 and cellules[0].find("strong"):
-            arbre_courant = cellules[0].get_text(" ", strip=True)
-            multiplicateur_arbre = cellules[1].get_text(strip=True)
+            current_tree = cellules[0].get_text(" ", strip=True)
+            tree_multiplier = cellules[1].get_text(strip=True)
             continue
         if len(cellules) < 2:
             continue
@@ -234,9 +244,9 @@ def extraire_talents(html, titre_talents):
         supprimer_tooltips(cellule_nom)
         nom = cellule_nom.get_text(" ", strip=True)
         talents.append({
-            "type_talent": titre_talents,
-            "arbre": arbre_courant,
-            "multiplicateur_arbre": multiplicateur_arbre,
+            "talent_type": titre_talents,
+            "tree": current_tree,
+            "tree_multiplier": tree_multiplier,
             "talent": nom,
             "points": float(match.group(1)),
             "points_max": float(match.group(2)),
@@ -244,10 +254,10 @@ def extraire_talents(html, titre_talents):
     return talents
 
 
-def extraire_class_et_generic_talents(html):
+def extraire_class_et_generic_talents(soup):
     return (
-        extraire_talents(html, "Class Talents")
-        + extraire_talents(html, "Generic Talents")
+        extraire_talents(soup, "Class Talents")
+        + extraire_talents(soup, "Generic Talents")
     )
 
 
@@ -256,30 +266,31 @@ MARQUEUR_ANGLAIS = "Well done! You have won the Tales of Maj'Eyal: The Age of As
 
 def analyser_personnage(url):
     html = get_html(url, timeout=10)
-    addons = extraire_addons(html)
-    ignore, mot = contient_mot_interdit(addons)
-    resultat = {
-        "url": url,
-        "ignore": ignore,
-        "mot_interdit": mot,
-        "addons": addons,
-        "prodigies": [],
-        "artefacts_jaunes": [],
-        "talents": [],
-    }
-    if ignore:
-        return resultat
     if MARQUEUR_ANGLAIS not in html:
-        resultat["ignore"] = True
-        resultat["mot_interdit"] = "langue_non_anglaise"
-        return resultat
-    resultat["talents"] = extraire_class_et_generic_talents(html)
-    resultat["prodigies"] = extraire_prodigies(html)
-    resultat["artefacts_jaunes"] = extraire_artefacts_jaunes(html)
-    return resultat
+        return {
+            "url": url, "ignore": True, "mot_interdit": "langue_non_anglaise",
+            "addons": [], "prodigies": [], "artefacts_jaunes": [], "talents": [],
+        }
+    soup = BeautifulSoup(html, "lxml")
+    addons = extraire_addons(soup)
+    ignore, mot = contient_mot_interdit(addons)
+    if ignore:
+        return {
+            "url": url, "ignore": True, "mot_interdit": mot,
+            "addons": addons, "prodigies": [], "artefacts_jaunes": [], "talents": [],
+        }
+    return {
+        "url": url,
+        "ignore": False,
+        "mot_interdit": None,
+        "addons": addons,
+        "talents": extraire_class_et_generic_talents(soup),
+        "prodigies": extraire_prodigies(soup),
+        "artefacts_jaunes": extraire_artefacts_jaunes(soup),
+    }
 
 
-def compter_prodigies_et_artefacts(df, on_progress=None, nb_workers=4):
+def compter_prodigies_et_artefacts(df, on_progress=None, nb_workers=20):
     cache = charger_cache_chars()
     resultats = {}
     urls_a_fetcher = []
@@ -354,26 +365,26 @@ def calculer_points_moyens_talents(df_details):
         for talent in (ligne["talents"] or []):
             lignes.append({"index_df": ligne["index_df"], **talent})
 
-    colonnes = ["index_df", "type_talent", "arbre", "multiplicateur_arbre", "talent", "points", "points_max"]
+    colonnes = ["index_df", "talent_type", "tree", "tree_multiplier", "talent", "points", "points_max"]
     df_talents = pd.DataFrame(lignes, columns=colonnes) if lignes else pd.DataFrame(columns=colonnes)
 
     if df_talents.empty:
         return df_talents, pd.DataFrame(columns=[
-            "type_talent", "arbre", "talent",
-            "points_moyens", "points_medians", "points_mode", "nb_personnages", "points_max",
+            "talent_type", "tree", "talent",
+            "avg_points", "median_points", "mode_points", "nb_characters", "points_max",
         ])
 
     df_moyennes = (
         df_talents
-        .groupby(["type_talent", "arbre", "talent"], dropna=False)
+        .groupby(["talent_type", "tree", "talent"], dropna=False)
         .agg(
-            points_moyens=("points", "mean"),
-            points_medians=("points", "median"),
-            points_mode=("points", lambda x: x.mode().iloc[0] if not x.mode().empty else None),
-            nb_personnages=("points", "count"),
+            avg_points=("points", "mean"),
+            median_points=("points", "median"),
+            mode_points=("points", lambda x: x.mode().iloc[0] if not x.mode().empty else None),
+            nb_characters=("points", "count"),
             points_max=("points_max", "max"),
         )
-        .sort_values(["type_talent", "points_moyens"], ascending=[True, False])
+        .sort_values(["talent_type", "avg_points"], ascending=[True, False])
         .reset_index()
     )
     return df_talents, df_moyennes

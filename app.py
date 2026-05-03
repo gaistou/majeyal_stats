@@ -181,8 +181,8 @@ df_details_filtre = df_details[df_details["index_df"].isin(set(index_valides))] 
 df_talents, df_talents_moyens = calculer_points_moyens_talents(df_details_filtre)
 df_talents_top = (
     df_talents_moyens
-    .loc[df_talents_moyens["nb_personnages"] >= nb_min_personnages]
-    .sort_values("points_moyens", ascending=False)
+    .loc[df_talents_moyens["nb_characters"] >= nb_min_personnages]
+    .sort_values("avg_points", ascending=False)
     .reset_index(drop=True)
 )
 
@@ -231,11 +231,11 @@ with tab_talents:
             "Type", ["Class Talents", "Generic Talents", "All"], horizontal=True, key="type_talent"
         )
     with col_metrique:
-        metrique = st.selectbox("Metric", ["points_moyens", "points_medians", "points_mode"], key="metrique")
+        metrique = st.selectbox("Metric", ["avg_points", "median_points", "mode_points"], key="metrique")
 
     df_display = df_talents_top.copy()
     if type_filtre != "All":
-        df_display = df_display[df_display["type_talent"] == type_filtre]
+        df_display = df_display[df_display["talent_type"] == type_filtre]
     df_display = df_display.sort_values(metrique, ascending=True)
 
     if df_display.empty:
@@ -244,12 +244,12 @@ with tab_talents:
         fig = px.bar(
             df_display,
             x=metrique, y="talent",
-            color="arbre", orientation="h",
-            facet_col="type_talent" if type_filtre == "All" else None,
-            hover_data={"points_moyens": ":.2f", "points_medians": ":.2f",
-                        "nb_personnages": True, "points_max": True},
+            color="tree", orientation="h",
+            facet_col="talent_type" if type_filtre == "All" else None,
+            hover_data={"avg_points": ":.2f", "median_points": ":.2f",
+                        "nb_characters": True, "points_max": True},
             labels={metrique: metrique.replace("_", " ").title(),
-                    "talent": "", "arbre": "Tree"},
+                    "talent": "", "tree": "Tree"},
         )
         fig.update_layout(height=max(400, len(df_display) * 22), legend_title="Tree")
         if type_filtre == "All":
@@ -268,12 +268,12 @@ with tab_talents:
                     break
         if pts_data:
             df_dist = pd.Series(pts_data).value_counts().sort_index().reset_index()
-            df_dist.columns = ["points", "nb_personnages"]
+            df_dist.columns = ["points", "nb_characters"]
             fig_dist = px.bar(
-                df_dist, x="points", y="nb_personnages",
-                color="nb_personnages", color_continuous_scale="Purples",
-                labels={"points": "Points invested", "nb_personnages": "# characters"},
-                text="nb_personnages",
+                df_dist, x="points", y="nb_characters",
+                color="nb_characters", color_continuous_scale="Purples",
+                labels={"points": "Points invested", "nb_characters": "# characters"},
+                text="nb_characters",
             )
             fig_dist.update_traces(textposition="outside")
             fig_dist.update_layout(coloraxis_showscale=False, showlegend=False,
@@ -297,7 +297,6 @@ with tab_prodigies:
         fig.update_layout(showlegend=False, coloraxis_showscale=False,
                           height=max(300, len(df_prod) * 30), yaxis_title="")
         st.plotly_chart(fig, use_container_width=True)
-        st.dataframe(df_prodigies, use_container_width=True, hide_index=True)
 
     st.divider()
     st.subheader("Prodigy correlations")
@@ -336,8 +335,10 @@ with tab_prodigies:
                 val = round(100 * count / min(compteur_solo[p1], compteur_solo[p2]), 1)
             else:
                 val = float(count)
-            matrix[i][j] = val
-            matrix[j][i] = val
+            if i < j:
+                matrix[i][j] = val
+            else:
+                matrix[j][i] = val
 
         df_matrix = pd.DataFrame(matrix, index=prodigies_sel, columns=prodigies_sel)
 
