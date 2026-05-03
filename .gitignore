@@ -14,6 +14,9 @@ env/
 # Variables d'environnement
 .env
 
+# Cache scraper
+cache/
+
 # OS
 .DS_Store
 Thumbs.db
