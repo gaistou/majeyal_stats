@@ -222,15 +222,18 @@ df_talents_top = (
 )
 
 # Active filter banner
-filtres_actifs = []
-if filtre_version_17:
-    filtres_actifs.append("version ≥ 1.7")
 if filtre_actif:
-    filtres_actifs.append(f"**{talent_filtre} ≥ {points_filtre} pts**")
-if filtres_actifs:
     st.info(
-        f"Active filter{'s' if len(filtres_actifs) > 1 else ''}: {' + '.join(filtres_actifs)} "
+        f"Active filter: **{talent_filtre} ≥ {points_filtre} pts** "
         f"— {len(df_filtre)} characters out of {len(df)}"
+    )
+
+with st.expander("Validity rules (always applied)"):
+    st.markdown(
+        "A character is considered **valid** if all of the following conditions are met:\n"
+        "- No cheat mod active\n"
+        "- Character page in English (required for parsing)\n\n"
+        "By default, only characters from version **≥ 1.7** are shown (adjustable in the sidebar)."
     )
 
 # Global metrics
