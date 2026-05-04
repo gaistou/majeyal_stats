@@ -171,7 +171,11 @@ df, df_prodigies_base, df_artefacts_base, df_details = st.session_state.results_
 df["race"] = df["name"].str.extract(rf"level\s+\d+\s+(\w+)\s+{selected_class}", expand=False)
 
 # Base indices (excluding cheats/language)
-index_valides_base = df_details.loc[~df_details["ignore"].astype(bool), "index_df"].tolist()
+index_valides_base = df_details.loc[
+    ~df_details["ignore"].astype(bool)
+    & df_details["prodigies"].apply(lambda p: len(p or []) <= 4),
+    "index_df",
+].tolist()
 
 # Apply version filter
 if filtre_version_17:
