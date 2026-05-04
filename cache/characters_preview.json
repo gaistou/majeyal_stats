@@ -1,3 +1,59 @@
-FIRST 2000 CHARS OF characters.json:
-
-{"https://te4.org/characters/146132/tome/f637b79e-0444-497b-a4b7-8f0b024b7fa3": {"url": "https://te4.org/characters/146132/tome/f637b79e-0444-497b-a4b7-8f0b024b7fa3", "ignore": true, "mot_interdit": "select your escorts", "addons": ["Ashes of Urh'Rok 1.7.4", "Embers of Rage 1.7.4", "Forbidden Cults 1.7.4", "Items Vault 1.7.6", "Possessor Bonus Class 1.7.4", "Select your Escorts 1.7.0"], "prodigies": [], "artefacts_jaunes": [], "talents": []}, "https://te4.org/characters/146132/tome/0681caa1-db4e-4c45-8f8c-a764a95b8b63": {"url": "https://te4.org/characters/146132/tome/0681caa1-db4e-4c45-8f8c-a764a95b8b63", "ignore": true, "mot_interdit": "select your escorts", "addons": ["Ashes of Urh'Rok 1.7.4", "Embers of Rage 1.7.4", "Forbidden Cults 1.7.4", "Items Vault 1.7.6", "Possessor Bonus Class 1.7.4", "Select your Escorts 1.7.0"], "prodigies": [], "artefacts_jaunes": [], "talents": []}, "https://te4.org/characters/125519/tome/d9819804-880a-4eba-9058-68e409a9bd6a": {"url": "https://te4.org/characters/125519/tome/d9819804-880a-4eba-9058-68e409a9bd6a", "ignore": true, "mot_interdit": "select your escorts", "addons": ["Adept Passive Fix 1.7.0", "Ashes of Urh'Rok 1.7.4", "Autosell Schematics 1.7.4", "Cleaner Item Descriptions 1.7.0", "Embers of Rage 1.7.4", "Faster Run/Rest/Explore 1.0.6", "Forbidden Cults 1.7.4", "Hedge Wizard Must Come 1.7.2", "Improved Auto-explore and Rest 1.7.2", "Items Vault 1.7.6", "Nekarcos's Quality of Life 01: Effect Display 1.7.5", "Possessor Bonus Class 1.7.4", "Quick Combos 1.7.4", "Select your Escorts 1.7.0", "Shader Control 1.7.6", "ZOmnibus Addon Pack 1.7.4"], "prodigies": [], "artefacts_jaunes": [], "talents": []},
+FIRST 2000 CHARS OF characters.json: {
+    "https://te4.org/characters/146132/tome/f637b79e-0444-497b-a4b7-8f0b024b7fa3": {
+        "url": "https://te4.org/characters/146132/tome/f637b79e-0444-497b-a4b7-8f0b024b7fa3",
+        "ignore": true,
+        "mot_interdit": "select your escorts",
+        "addons": [
+            "Ashes of Urh'Rok 1.7.4",
+            "Embers of Rage 1.7.4",
+            "Forbidden Cults 1.7.4",
+            "Items Vault 1.7.6",
+            "Possessor Bonus Class 1.7.4",
+            "Select your Escorts 1.7.0"
+        ],
+        "prodigies": [],
+        "artefacts_jaunes": [],
+        "talents": []
+    },
+    "https://te4.org/characters/146132/tome/0681caa1-db4e-4c45-8f8c-a764a95b8b63": {
+        "url": "https://te4.org/characters/146132/tome/0681caa1-db4e-4c45-8f8c-a764a95b8b63",
+        "ignore": true,
+        "mot_interdit": "select your escorts",
+        "addons": [
+            "Ashes of Urh'Rok 1.7.4",
+            "Embers of Rage 1.7.4",
+            "Forbidden Cults 1.7.4",
+            "Items Vault 1.7.6",
+            "Possessor Bonus Class 1.7.4",
+            "Select your Escorts 1.7.0"
+        ],
+        "prodigies": [],
+        "artefacts_jaunes": [],
+        "talents": []
+    },
+    "https://te4.org/characters/125519/tome/d9819804-880a-4eba-9058-68e409a9bd6a": {
+        "url": "https://te4.org/characters/125519/tome/d9819804-880a-4eba-9058-68e409a9bd6a",
+        "ignore": true,
+        "mot_interdit": "select your escorts",
+        "addons": [
+            "Adept Passive Fix 1.7.0",
+            "Ashes of Urh'Rok 1.7.4",
+            "Autosell Schematics 1.7.4",
+            "Cleaner Item Descriptions 1.7.0",
+            "Embers of Rage 1.7.4",
+            "Faster Run/Rest/Explore 1.0.6",
+            "Forbidden Cults 1.7.4",
+            "Hedge Wizard Must Come 1.7.2",
+            "Improved Auto-explore and Rest 1.7.2",
+            "Items Vault 1.7.6",
+            "Nekarcos's Quality of Life 01: Effect Display 1.7.5",
+            "Possessor Bonus Class 1.7.4",
+            "Quick Combos 1.7.4",
+            "Select your Escorts 1.7.0",
+            "Shader Control 1.7.6",
+            "ZOmnibus Addon Pack 1.7.4"
+        ],
+        "prodigies": [],
+        "artefacts_jaunes": [],
+        "talents": []
+    },
