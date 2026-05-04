@@ -233,6 +233,7 @@ if filtre_actif:
 
 with st.expander("Validity rules (always applied)"):
     st.markdown(
+        "The stats come from winner characters on Insane Roguelike."
         "A character is considered **valid** if all of the following conditions are met:\n"
         "- No cheat mod active\n"
         "- Character page in English (required for parsing)\n\n"
