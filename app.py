@@ -202,7 +202,7 @@ df_filtre = df.loc[index_valides].reset_index(drop=True)
 compte_par_race = df_filtre["race"].value_counts(dropna=False).reset_index(name="count")
 
 # Recompute prodigies / artefacts if filter is active
-if filtre_actif:
+if filtre_actif or filtre_version_17:
     df_prodigies, df_artefacts = stats_depuis_indices(df_details, index_valides)
 else:
     df_prodigies, df_artefacts = df_prodigies_base, df_artefacts_base
