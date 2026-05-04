@@ -123,7 +123,14 @@ if selected_class not in st.session_state.results_by_class:
     if cached:
         st.session_state.results_by_class[selected_class] = deserialize_results(cached)
 
-st.title(f"{selected_class} — Tales of Maj'Eyal")
+st.title(f"{selected_class}")
+st.markdown("### Select a class")
+selected_class = st.selectbox(
+    "class",
+    list(CLASSES.keys()),
+    key="class_selector",
+    label_visibility="collapsed",
+)
 
 # Available talent names for cross-filter
 talent_names_disponibles = []
@@ -139,10 +146,6 @@ if selected_class in st.session_state.results_by_class:
 with st.sidebar:
     st.subheader("Version")
     filtre_version_17 = st.checkbox("Only version ≥ 1.7", value=True)
-
-    st.divider()
-    st.subheader("Class")
-    selected_class = st.selectbox("Class", list(CLASSES.keys()), key="class_selector")
 
     st.divider()
     st.subheader("Display")
