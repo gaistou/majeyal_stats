@@ -231,7 +231,7 @@ if filtre_actif:
         f"— {len(df_filtre)} characters out of {len(df)}"
     )
 
-with st.expander("Validity rules (always applied)"):
+with st.expander("Character validity rules"):
     st.markdown(
         "The stats come from winner characters on Insane Roguelike."
         "A character is considered **valid** if all of the following conditions are met:\n"
