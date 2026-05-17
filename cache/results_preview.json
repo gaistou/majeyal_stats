@@ -1,0 +1,97 @@
+{
+  "df": [
+    {
+      "user": "changzizai",
+      "name": "Lightning the level 50 Shalore Archmage",
+      "character_url": "https://te4.org/characters/383966/tome/0203d308-ba51-443b-8126-00e2c752180f",
+      "class": "archmage",
+      "difficulty": "insane",
+      "permadeath": "roguelike",
+      "campaign": "maj'eyal",
+      "winner": "yes",
+      "last_updated": "9 hours 12 min ago"
+    },
+    {
+      "user": "tamanegicat",
+      "name": "Onion Am Ins RL the level 50 Cornac Archmage",
+      "character_url": "https://te4.org/characters/208729/tome/4bf06a6c-2a77-4f51-a8d6-36adbcd22431",
+      "class": "archmage",
+      "difficulty": "insane",
+      "permadeath": "roguelike",
+      "campaign": "maj'eyal",
+      "winner": "yes",
+      "last_updated": "2 days 2 hours ago"
+    }
+  ],
+  "prodigies": [
+    {
+      "prodigy": "Aether Permeation",
+      "count": 109
+    },
+    {
+      "prodigy": "Adept",
+      "count": 92
+    }
+  ],
+  "artefacts": [
+    {
+      "artefact": "Dakhtun's Gauntlets (0 def, 6 armour)",
+      "count": 114
+    },
+    {
+      "artefact": "Void Orb",
+      "count": 78
+    }
+  ],
+  "details": [
+    {
+      "url": "https://te4.org/characters/383966/tome/0203d308-ba51-443b-8126-00e2c752180f",
+      "ignore": true,
+      "mot_interdit": "tougher escorts",
+      "addons": [
+        "Ashes of Urh'Rok 1.7.4",
+        "Easy Map v2 1.6.0",
+        "Embers of Rage 1.7.4",
+        "Forbidden Cults 1.7.4",
+        "Ignore Race/Class Locks 1.7.0",
+        "Items Vault 1.7.6",
+        "Modified Item Descriptions 1.7.6",
+        "Opt-in Adventurers Parties 1.7.0",
+        "Possessor Bonus Class 1.7.4",
+        "Select your Escorts 1.7.0",
+        "Tougher Escorts 1.7.4"
+      ],
+      "prodigies": [],
+      "artefacts_jaunes": [],
+      "talents": [],
+      "index_df": 0
+    },
+    {
+      "url": "https://te4.org/characters/208729/tome/4bf06a6c-2a77-4f51-a8d6-36adbcd22431",
+      "ignore": true,
+      "mot_interdit": "god",
+      "addons": [
+        "Adept Passive Fix 1.7.0",
+        "Ashes of Urh'Rok 1.7.4",
+        "Embers of Rage 1.7.4",
+        "Escorts Enhanced 1.7.0",
+        "Forbidden Cults 1.7.4",
+        "Free Respec 1.7.2",
+        "Godfeaster on the Map 1.7.0",
+        "Items Vault 1.7.6",
+        "Logical Alchemists 1.5.10",
+        "Melinda on the Map - Bamboo Edition 1.7.0",
+        "Merchant on the Map 1.7.0",
+        "No Patrols 1.7.2",
+        "Possessor Bonus Class 1.7.4",
+        "Quality of Life Pack 1.7.4",
+        "Select your Escorts 1.7.0",
+        "Talent Point Planner 1.7.0"
+      ],
+      "prodigies": [],
+      "artefacts_jaunes": [],
+      "talents": [],
+      "index_df": 1
+    }
+  ]
+}

@@ -132,15 +132,26 @@ selected_class = st.selectbox(
     label_visibility="collapsed",
 )
 
-# Available talent names for cross-filter
+# Available talent names + per-character class tree points (for sidebar + builds tab)
 talent_names_disponibles = []
+all_char_tree_pts = {}  # index_df -> {tree: total_pts}
 if selected_class in st.session_state.results_by_class:
     df_details_tmp = st.session_state.results_by_class[selected_class][3]
     noms = set()
-    for talents in df_details_tmp.loc[~df_details_tmp["ignore"].astype(bool), "talents"]:
-        for t in (talents or []):
+    for _, row in df_details_tmp.loc[~df_details_tmp["ignore"].astype(bool)].iterrows():
+        tree_pts = {}
+        for t in (row.get("talents") or []):
             noms.add(t["talent"])
+            if t.get("talent_type") == "Class Talents" and t.get("tree"):
+                tree_pts[t["tree"]] = tree_pts.get(t["tree"], 0) + t.get("points", 0)
+        all_char_tree_pts[row["index_df"]] = tree_pts
     talent_names_disponibles = sorted(noms)
+
+# primary/secondary maps are computed inside the sidebar block (need slider values first)
+primary_tree_map = {}
+secondary_tree_map = {}
+trees_excluded = set()
+primary_trees_disponibles = []
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -163,6 +174,39 @@ with st.sidebar:
         st.caption("No data yet — run the Admin page locally to scrape.")
         talent_filtre = "(none)"
         points_filtre = 1
+
+    st.divider()
+    st.subheader("Primary style")
+    excl_threshold = st.slider("Exclude trees invested by more than X% of characters", 50, 100, 75, step=5, key="builds_excl_threshold")
+    min_invest_pts = st.slider("Min points to count as invested", 1, 20, 8, key="builds_min_invest")
+
+    if all_char_tree_pts:
+        n_total = max(len(all_char_tree_pts), 1)
+        invest_counts = {}
+        for _tree_pts in all_char_tree_pts.values():
+            for _tree, _pts in _tree_pts.items():
+                if _pts >= min_invest_pts:
+                    invest_counts[_tree] = invest_counts.get(_tree, 0) + 1
+        trees_excluded = {t for t, c in invest_counts.items() if 100.0 * c / n_total > excl_threshold}
+
+        for _idx, _tree_pts in all_char_tree_pts.items():
+            _ranked = sorted(
+                [(_t, _p) for _t, _p in _tree_pts.items() if _t not in trees_excluded and _p > 0],
+                key=lambda x: -x[1],
+            )
+            if _ranked:
+                primary_tree_map[_idx] = _ranked[0][0]
+            if len(_ranked) >= 2:
+                secondary_tree_map[_idx] = _ranked[1][0]
+
+        primary_trees_disponibles = sorted(set(primary_tree_map.values()))
+        if trees_excluded:
+            st.caption(f"Excluded as universal (>{excl_threshold}%): {', '.join(sorted(trees_excluded))}")
+
+    if primary_trees_disponibles:
+        primary_tree_filtre = st.selectbox("Primary class tree", ["(all)"] + primary_trees_disponibles, key="sidebar_primary_tree")
+    else:
+        primary_tree_filtre = "(all)"
 
 # ── Display ───────────────────────────────────────────────────────────────────
 if selected_class not in st.session_state.results_by_class:
@@ -205,17 +249,23 @@ if filtre_actif:
 else:
     index_valides = index_valides_base
 
+# Apply primary style filter
+primary_filtre_actif = primary_tree_filtre != "(all)"
+if primary_filtre_actif:
+    index_valides = [i for i in index_valides if primary_tree_map.get(i) == primary_tree_filtre]
+
 df_filtre = df.loc[index_valides].reset_index(drop=True)
 compte_par_race = df_filtre["race"].value_counts(dropna=False).reset_index(name="count")
 
-# Recompute prodigies / artefacts if filter is active
-if filtre_actif or filtre_version_17:
+# Recompute prodigies / artefacts if any filter is active
+if filtre_actif or filtre_version_17 or primary_filtre_actif:
     df_prodigies, df_artefacts = stats_depuis_indices(df_details, index_valides)
 else:
     df_prodigies, df_artefacts = df_prodigies_base, df_artefacts_base
 
 # Talents computed on filtered subset
-df_details_filtre = df_details[df_details["index_df"].isin(set(index_valides))] if filtre_actif else df_details
+any_filtre_actif = filtre_actif or primary_filtre_actif
+df_details_filtre = df_details[df_details["index_df"].isin(set(index_valides))] if any_filtre_actif else df_details
 df_talents, df_talents_moyens = calculer_points_moyens_talents(df_details_filtre)
 df_talents_top = (
     df_talents_moyens
@@ -225,11 +275,13 @@ df_talents_top = (
 )
 
 # Active filter banner
+filtres_actifs = []
 if filtre_actif:
-    st.info(
-        f"Active filter: **{talent_filtre} ≥ {points_filtre} pts** "
-        f"— {len(df_filtre)} characters out of {len(df)}"
-    )
+    filtres_actifs.append(f"**{talent_filtre} ≥ {points_filtre} pts**")
+if primary_filtre_actif:
+    filtres_actifs.append(f"**primary style: {primary_tree_filtre}**")
+if filtres_actifs:
+    st.info(f"Active filter: {' + '.join(filtres_actifs)} — {len(df_filtre)} characters out of {len(df)}")
 
 with st.expander("Character validity rules"):
     st.markdown(
@@ -249,8 +301,8 @@ col4.metric("Distinct races", int(compte_par_race["race"].nunique()))
 
 st.divider()
 
-tab_races, tab_talents, tab_prodigies, tab_artefacts, tab_persos = st.tabs(
-    ["Races", "Talents", "Prodigies", "Artefacts", "Characters"]
+tab_races, tab_talents, tab_builds, tab_prodigies, tab_artefacts, tab_persos = st.tabs(
+    ["Races", "Talents", "Builds", "Prodigies", "Artefacts", "Characters"]
 )
 
 # ── Races ─────────────────────────────────────────────────────────────────────
@@ -326,6 +378,128 @@ with tab_talents:
             fig_dist.update_layout(coloraxis_showscale=False, showlegend=False,
                                    xaxis=dict(tickmode="linear", dtick=1))
             st.plotly_chart(fig_dist, use_container_width=True)
+
+# ── Builds ────────────────────────────────────────────────────────────────────
+with tab_builds:
+    st.subheader("Build archetypes")
+    st.caption("Inner ring: primary class tree (most invested, universal trees excluded). Outer ring: secondary class tree.")
+
+    if not primary_tree_map:
+        st.info("No talent data available — run the Admin page locally to scrape.")
+    else:
+        min_chars_build = st.slider("Min. characters per combination", 1, 20, 3, key="builds_min_chars")
+
+        # Build df_build from the maps already computed in the sidebar (exclusion-aware)
+        records = [
+            {
+                "index_df": idx,
+                "primary": primary_tree_map[idx],
+                "secondary": secondary_tree_map.get(idx, "—"),
+            }
+            for idx in index_valides
+            if idx in primary_tree_map
+        ]
+        df_build = pd.DataFrame(records) if records else pd.DataFrame(columns=["index_df", "primary", "secondary"])
+
+        df_combos = (
+            df_build.groupby(["primary", "secondary"]).size()
+            .reset_index(name="count")
+        )
+        df_combos_filtered = df_combos[df_combos["count"] >= min_chars_build]
+
+        if df_combos_filtered.empty:
+            st.info(f"No combination with ≥ {min_chars_build} characters.")
+        else:
+            fig_sun = px.sunburst(
+                df_combos_filtered,
+                path=["primary", "secondary"],
+                values="count",
+                color="primary",
+            )
+            fig_sun.update_traces(textinfo="label+value")
+            fig_sun.update_layout(height=520, margin=dict(t=10, b=10, l=10, r=10))
+            st.plotly_chart(fig_sun, use_container_width=True)
+
+            st.divider()
+            primaries_ordered = (
+                df_combos_filtered.groupby("primary")["count"]
+                .sum().sort_values(ascending=False).index.tolist()
+            )
+            selected_primary = st.selectbox("Inspect a primary style", primaries_ordered, key="builds_primary")
+
+            secs_for_primary = (
+                df_combos_filtered[df_combos_filtered["primary"] == selected_primary]
+                .sort_values("count", ascending=False)["secondary"].tolist()
+            )
+            selected_secondary = st.selectbox(
+                "Secondary tree", ["(all)"] + secs_for_primary, key="builds_secondary"
+            )
+
+            if selected_secondary == "(all)":
+                indices_build = df_build[df_build["primary"] == selected_primary]["index_df"].tolist()
+            else:
+                mask = (df_build["primary"] == selected_primary) & (df_build["secondary"] == selected_secondary)
+                indices_build = df_build[mask]["index_df"].tolist()
+
+            st.caption(f"{len(indices_build)} characters")
+
+            df_prod_build, df_art_build = stats_depuis_indices(df_details, indices_build)
+            df_race_build = (
+                df.loc[df.index.isin(indices_build), "race"]
+                .value_counts().rename_axis("race").reset_index(name="count")
+            )
+
+            col_prod, col_art, col_race = st.columns(3)
+
+            with col_prod:
+                st.markdown("**Top prodigies**")
+                if not df_prod_build.empty:
+                    fig_p = px.bar(
+                        df_prod_build.head(8).sort_values("count", ascending=True),
+                        x="count", y="prodigy", orientation="h",
+                        color="count", color_continuous_scale="Reds",
+                        text="count", labels={"count": "", "prodigy": ""},
+                    )
+                    fig_p.update_traces(textposition="outside")
+                    fig_p.update_layout(showlegend=False, coloraxis_showscale=False,
+                                        height=300, yaxis_title="")
+                    st.plotly_chart(fig_p, use_container_width=True)
+                else:
+                    st.caption("No data")
+
+            with col_art:
+                st.markdown("**Top artefacts**")
+                if not df_art_build.empty:
+                    fig_a = px.bar(
+                        df_art_build.head(8).sort_values("count", ascending=True),
+                        x="count", y="artefact", orientation="h",
+                        color="count", color_continuous_scale="Greens",
+                        text="count", labels={"count": "", "artefact": ""},
+                    )
+                    fig_a.update_traces(textposition="outside")
+                    fig_a.update_layout(showlegend=False, coloraxis_showscale=False,
+                                        height=300, yaxis_title="")
+                    st.plotly_chart(fig_a, use_container_width=True)
+                else:
+                    st.caption("No data")
+
+            with col_race:
+                st.markdown("**Races**")
+                df_race_clean = df_race_build.dropna(subset=["race"])
+                if not df_race_clean.empty:
+                    fig_r = px.bar(
+                        df_race_clean.sort_values("count", ascending=True),
+                        x="count", y="race", orientation="h",
+                        color="count", color_continuous_scale="Blues",
+                        text="count", labels={"count": "", "race": ""},
+                    )
+                    fig_r.update_traces(textposition="outside")
+                    fig_r.update_layout(showlegend=False, coloraxis_showscale=False,
+                                        height=300, yaxis_title="")
+                    st.plotly_chart(fig_r, use_container_width=True)
+                else:
+                    st.caption("No data")
+
 
 # ── Prodigies ─────────────────────────────────────────────────────────────────
 with tab_prodigies:
