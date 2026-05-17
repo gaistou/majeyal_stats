@@ -159,10 +159,6 @@ with st.sidebar:
     filtre_version_17 = st.checkbox("Only version ≥ 1.7", value=True)
 
     st.divider()
-    st.subheader("Display")
-    nb_min_personnages = st.slider("Min. characters (talents)", 1, 30, 10)
-
-    st.divider()
     st.subheader("Cross-filter")
     if talent_names_disponibles:
         talent_filtre = st.selectbox("Talent", ["(none)"] + talent_names_disponibles)
@@ -207,6 +203,8 @@ with st.sidebar:
         primary_tree_filtre = st.selectbox("Primary class tree", ["(all)"] + primary_trees_disponibles, key="sidebar_primary_tree")
     else:
         primary_tree_filtre = "(all)"
+
+NB_MIN_PERSONNAGES_TALENTS = 10
 
 # ── Display ───────────────────────────────────────────────────────────────────
 if selected_class not in st.session_state.results_by_class:
@@ -269,7 +267,7 @@ df_details_filtre = df_details[df_details["index_df"].isin(set(index_valides))] 
 df_talents, df_talents_moyens = calculer_points_moyens_talents(df_details_filtre)
 df_talents_top = (
     df_talents_moyens
-    .loc[df_talents_moyens["nb_characters"] >= nb_min_personnages]
+    .loc[df_talents_moyens["nb_characters"] >= NB_MIN_PERSONNAGES_TALENTS]
     .sort_values("avg_points", ascending=False)
     .reset_index(drop=True)
 )
@@ -324,6 +322,8 @@ with tab_races:
 with tab_talents:
     st.subheader("Average points per talent")
 
+    st.caption(f"Only talents seen on ≥ {NB_MIN_PERSONNAGES_TALENTS} characters are shown.")
+
     col_filtre, col_metrique = st.columns([2, 1])
     with col_filtre:
         type_filtre = st.radio(
@@ -338,7 +338,7 @@ with tab_talents:
     df_display = df_display.sort_values(metrique, ascending=True)
 
     if df_display.empty:
-        st.info(f"No talent with ≥ {nb_min_personnages} characters.")
+        st.info(f"No talent with ≥ {NB_MIN_PERSONNAGES_TALENTS} characters.")
     else:
         fig = px.bar(
             df_display,
@@ -346,11 +346,14 @@ with tab_talents:
             color="tree", orientation="h",
             facet_col="talent_type" if type_filtre == "All" else None,
             hover_data={"avg_points": ":.2f", "median_points": ":.2f",
-                        "nb_characters": True, "points_max": True},
+                        "mode_points": True, "nb_characters": True},
             labels={metrique: metrique.replace("_", " ").title(),
-                    "talent": "", "tree": "Tree"},
+                    "talent": "", "tree": "Tree",
+                    "avg_points": "Avg", "median_points": "Median",
+                    "mode_points": "Mode", "nb_characters": "Characters"},
         )
-        fig.update_layout(height=max(400, len(df_display) * 22), legend_title="Tree")
+        fig.update_layout(height=max(400, len(df_display) * 22), legend_title="Tree",
+                          legend=dict(traceorder="reversed"))
         if type_filtre == "All":
             fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
         st.plotly_chart(fig, use_container_width=True)
